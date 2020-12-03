@@ -187,11 +187,11 @@ mSSTMPmin<-group_by(avSSTMP, month) %>%
   summarise(min_sst = min(analysed_sst))
 
 
-avSSTREF$Date<-as.POSIXlt(strptime(as.character(avSSTREF$Date), "%Y-%m-%d"))
-avSSTREF$month <- paste(format(avSSTREF$Date, format="%m"),format(avSSTREF$Date, format="%Y"), sep = "-") #columna de mes y año
+avSSTREF$date<-as.POSIXlt(strptime(as.character(avSSTREF$date), "%Y-%m-%d"))
+avSSTREF$month <- paste(format(avSSTREF$date, format="%m"),format(avSSTREF$date, format="%Y"), sep = "-") #columna de mes y año
 
 mSSTREFmax<-group_by(avSSTREF,month) %>%
-  summarise(max_sst = max(Ref_SST))
+  summarise(max_sst = max(analysed_sst))
 
 
 head(mSSTMPmin)
@@ -248,17 +248,19 @@ dim(avTempMP)
 #Llamar datos de referencia y ajustar para que calcen con los in situ
 
 head(avSSTREF)
-avSSTREF$date <- as.POSIXlt(strptime(as.character(avSSTREF$date), "%Y-%m-%d"))
+avSSTREF$Date <- as.POSIXlt(strptime(as.character(avSSTREF$Date), "%Y-%m-%d"))
 
-colnames(avSSTREF)<- c("Date", "Ref_SST", "seven_day_index")
+colnames(avSSTREF)<- c("Date", "Ref_SST", "seven_day_index", "month")
 
 allTemp<-merge(avSSTREF, avTempMP, all.y=T)
+
+
 head(allTemp)
 str(allTemp)
 
 #minimos y maximos por semana
 
-minTemp<-group_by(allTemp[,3:4], seven_day_index) %>%
+minTemp<-group_by(allTemp, seven_day_index) %>%
   summarise(min_insitu = min(Temp))
   
 maxTemp<-group_by(allTemp, seven_day_index) %>%  
@@ -314,7 +316,9 @@ wkUI<- ggplot(SSTwk, aes(seven_day_index, UI)) +
     theme_classic()
 
 wkUI
+```
 
+```{r}
 mUI<- ggplot(SSTm, aes(month, UI)) +
   geom_point(color = "black", cex = 1.5) + 
   geom_point(data= TempM, aes(month, UI), color = "red") +
