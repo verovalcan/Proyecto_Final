@@ -61,14 +61,6 @@ SSTMP<-read.csv("SST_MP.csv", header = T, sep = ",")
 
 SSTREF<-read.csv("SST_REF.csv", header = T, sep = ",")
 
-#explorarcion inicial
-head(SSTMP)
-str(SSTMP)
-dim(SSTMP)
-
-head(SSTREF)
-str(SSTREF)
-dim(SSTREF)
 ```
 
 
@@ -79,18 +71,192 @@ Los datos de temperatura del agua in situ se tomaron con un HOBO fijo en la bahi
 
 TempMP<-read.csv("Matapalito.csv", header=T, sep= ",")
 
-#Exploracion Inicial
-head(TempMP)
-str(TempMP)
-dim(TempMP)
-
 ```
 
 
 # Análisis de los datos
 
+Primero cargar las librerias necesarias
+
+```{r}
+library(chron)
+library(dplyr)
+
+```
+
+Procesamiento de datos satelitales
+
+```{r}
+#explorarcion inicial
+head(SSTMP)
+str(SSTMP)
+dim(SSTMP)
+
+head(SSTREF)
+str(SSTREF)
+dim(SSTREF)
+
+
+#Limpieza de datos
+
+SSTMP<-SSTMP[-1,] #Eliminar fila 1 que es parte del encabezado
+SSTREF<-SSTREF[-1,]
+
+
+#dar formato a las fechas
+
+SSTMP$time<-as.POSIXlt(strptime(as.character(SSTMP$time), "%Y-%m-%dT%H:%M:%S"))
+SSTREF$time<-as.POSIXlt(strptime(as.character(SSTREF$time), "%Y-%m-%dT%H:%M:%S"))
+
+#hacer nueva columna por dia que sera usado como factor para operaciones
+
+SSTMP$date<-as.factor(paste(format(SSTMP$time, format="%Y"),
+                            format(SSTMP$time, format="%m"),
+                            format(SSTMP$time, format="%d"), sep="-"))
+
+SSTREF$date<-as.factor(paste(format(SSTREF$time,format="%Y"),
+                             format(SSTREF$time, format="%m"),
+                             format(SSTREF$time, format="%d"), sep="-"))
+
+#Cambiar NaN a NA
+
+SSTMP[SSTMP$analysed_sst=="NaN",4]=NA
+SSTREF[SSTREF$analysed_sst=="NaN",4]=NA
+
+#Visualizar para ver que todo vaya bien
+
+head(SSTMP)
+str(SSTMP)
+head(SSTREF)
+str(SSTREF)
+
+#Hacer la temperatura numerico
+
+SSTMP$analysed_sst<-as.numeric(SSTMP$analysed_sst)
+SSTREF$analysed_sst<-as.numeric(SSTREF$analysed_sst)
+
+#Sacar promedios diarios de cada zona para tener 1 dato local y uno de referencia
+
+avSSTMP<- aggregate(analysed_sst ~date, data=SSTMP, FUN = mean)
+avSSTREF<- aggregate(analysed_sst ~date, data=SSTREF, FUN = mean)
+
+head(avSSTMP)
+head(avSSTREF)
+
+#Sacar minimos y maximos semanales que son con los que se sacan el Indice
+
+avSSTMP$seven_day_index <- c(0, rep(1:(nrow(avSSTMP)-1)%/%7)) #agrupar x semana
+
+SSTMPmin<-group_by(avSSTMP, seven_day_index) %>%
+  summarise(min_sst = min(analysed_sst))
+
+avSSTREF$seven_day_index <- c(0, rep(1:(nrow(avSSTREF)-1)%/%7))
+
+SSTREFmax<-group_by(avSSTREF, seven_day_index) %>%
+  summarise(max_sst = max(analysed_sst))
+
+
+head(SSTMPmin)
+dim(SSTMPmin) #131 semanas, correcto para el periodo
+head(SSTREFmax)
+dim(SSTREFmax)
+
+
+#calcular el Indice de afloramiento semanal
+
+#Base de datos semanales
+SSTwk<-merge(SSTMPmin,SSTREFmax, by="seven_day_index")
+
+head(SSTwk)
+
+#indice
+SSTwk$UI<-SSTwk$max_sst-SSTwk$min_sst
+
+head(SSTwk)
+
+```
+
+
+Procesamiento de datos in situ
+
+```{r}
+#Exploracion Inicial
+head(TempMP)
+str(TempMP)
+dim(TempMP)
+
+#Promedios diarios
+
+TempMP$Date<-as.factor(TempMP$Date)
+avTempMP<-aggregate(Temp ~Date, data=TempMP, FUN = mean)
+head(avTempMP)
+
+
+#Formato de fecha para ordenarlo
+avTempMP$Date<-as.POSIXlt(strptime(as.character(avTempMP$Date), "%m/%d/%Y"))
+
+head(avTempMP)
+dim(avTempMP)
+
+avTempMP<-arrange(avTempMP, Date)
+
+#Eliminar datos despues de datos satelitales
+
+avTempMP<- avTempMP[1:619,]
+
+head(avTempMP)
+dim(avTempMP)
+
+#Llamar datos de referencia y ajustar para que calcen con los in situ
+
+head(avSSTREF)
+avSSTREF$date <- as.POSIXlt(strptime(as.character(avSSTREF$date), "%Y-%m-%d"))
+
+colnames(avSSTREF)<- c("Date", "Ref_SST", "seven_day_index")
+
+allTemp<-merge(avSSTREF, avTempMP, all.y=T)
+head(allTemp)
+str(allTemp)
+
+#minimos y maximos por semana
+
+minTemp<-group_by(allTemp[,3:4], seven_day_index) %>%
+  summarise(min_insitu = min(Temp))
+  
+maxTemp<-group_by(allTemp, seven_day_index) %>%  
+  summarise(max_sst = max(Ref_SST))
+
+head(minTemp)
+head(maxTemp)
+
+#Base de datos semanales
+Tempwk<-merge(minTemp,maxTemp, by="seven_day_index")
+
+head(Tempwk)
+
+#indice
+Tempwk$UI<-Tempwk$max_sst-Tempwk$min_insitu
+
+head(Tempwk)
+
+```
+
 
 
 # Interpretación 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
