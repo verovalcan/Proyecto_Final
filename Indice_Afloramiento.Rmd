@@ -81,7 +81,7 @@ Primero cargar las librerias necesarias
 ```{r}
 library(chron)
 library(dplyr)
-
+library(ggplot2)
 ```
 
 Procesamiento de datos satelitales
@@ -300,7 +300,31 @@ head(TempM)
 
 ```
 
+Graficacion de los Indices de afloramiento (UI)
 
+tenemos dos UI semanales (`SSTwk` y `Tempwk`) y dos mensuales (`SSTm` y `TempM`)
+
+```{r}
+wkUI<- ggplot(SSTwk, aes(seven_day_index, UI)) +
+  geom_line(color = "black", cex = 1.5) + 
+  geom_line(data= Tempwk, aes(seven_day_index, UI), color = "red") +
+    labs(title = "Indice de afloramiento semanal") + 
+    xlab("Semanas")+
+    theme(plot.title = element_text(hjust = 0.5)) +
+    theme_classic()
+
+wkUI
+
+mUI<- ggplot(SSTm, aes(month, UI)) +
+  geom_point(color = "black", cex = 1.5) + 
+  geom_point(data= TempM, aes(month, UI), color = "red") +
+    labs(title = "Indice de afloramiento mensual") + 
+    xlab("Fecha")+
+    theme(plot.title = element_text(hjust = 0.5)) +
+    theme_classic()
+
+mUI
+```
 
 # Interpretación 
 
