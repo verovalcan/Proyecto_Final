@@ -174,6 +174,44 @@ SSTwk$UI<-SSTwk$max_sst-SSTwk$min_sst
 
 head(SSTwk)
 
+
+##Indice mensual
+
+#Sacar minimos y maximos mensuales que son con los que se sacan el Indice
+
+avSSTMP$date<-as.POSIXlt(strptime(as.character(avSSTMP$date), "%Y-%m-%d"))
+
+avSSTMP$month <- paste(format(avSSTMP$date, format="%m"),format(avSSTMP$date, format="%Y"), sep = "-") #columna de mes y año
+
+mSSTMPmin<-group_by(avSSTMP, month) %>%
+  summarise(min_sst = min(analysed_sst))
+
+
+avSSTREF$Date<-as.POSIXlt(strptime(as.character(avSSTREF$Date), "%Y-%m-%d"))
+avSSTREF$month <- paste(format(avSSTREF$Date, format="%m"),format(avSSTREF$Date, format="%Y"), sep = "-") #columna de mes y año
+
+mSSTREFmax<-group_by(avSSTREF,month) %>%
+  summarise(max_sst = max(Ref_SST))
+
+
+head(mSSTMPmin)
+dim(mSSTMPmin) 
+head(mSSTREFmax)
+dim(mSSTREFmax)
+
+
+#calcular el Indice de afloramiento semanal
+
+#Base de datos semanales
+SSTm<-merge(mSSTMPmin,mSSTREFmax, by="month")
+
+head(SSTm)
+
+#indice
+SSTm$UI<-SSTm$max_sst-SSTm$min_sst
+
+head(SSTm)
+
 ```
 
 
@@ -238,6 +276,27 @@ head(Tempwk)
 Tempwk$UI<-Tempwk$max_sst-Tempwk$min_insitu
 
 head(Tempwk)
+
+
+##Indice mensual
+
+#Sacar minimos y maximos mensuales que son con los que se sacan el Indice
+
+avTempMP$month <- paste(format(avTempMP$Date, format="%m"),format(avTempMP$Date, format="%Y"), sep = "-") #columna de mes y año
+
+mTempMPmin<-group_by(avTempMP, month) %>%
+  summarise(min_insitu = min(Temp))
+dim(mTempMPmin)
+
+#Base de datos mensuales
+TempM<-merge(mTempMPmin, mSSTREFmax, by="month", all.y= F)
+
+head(TempM)
+
+#indice
+TempM$UI<-TempM$max_sst-TempM$min_insitu
+
+head(TempM)
 
 ```
 
