@@ -12,7 +12,7 @@ Mi ivestigacion se centra en los patrones de movimiento de tortugas carey juveni
 La bahia Matapalito se convierte en un sitio de crucial importancia, ya que al encontrar esta y otras especies de tortugas en peligro de extincion y en estadios vitales para su supervivencia como lo son las etapas juveniles. Por esto, entender mejor la ecologia y el comportamiento de las torugas en esta bahia puede ayudar a tomar mejore medidas de manejo. Sin embargo, en esta bahia en particular se unen factores importantes que pueden afectar los patrones de movimiento de las tortugas. En esta bahia se dan afloramientos costeros temporales, los cuales son eventos oceanograficos donde el viento causa un desplazamiento de las aguas superficiales y una surgencia de aguas profundas recas en nutrientes y bajas en oxigeno y temperatura. Estos eventos se dan etre Diciembre y Abril de cada año, y su efecto en los ecosistemas locales es cpoco conocido.
 Antes de poder analizar como las condiciones ambientales afectan los patrones de movimiento (lo que es uno de los principales objetivos de mi tesis de maestria), se debe de iniciar por analizar los patrones de estas condiciones ambientales para ver como cambian con el afloramiento. En este caso nos vamos a enfocar en las temperaturas del agua, que son uno de los factores que mas cambian con estos eventos y son de las mas faciles de medir. Ademas de que es muy util como proxy del indice de afloraminto (el cual indica la intensidad del evento).
 
-### ¿Cual es el indice de afloramiento (por Temperatura SUperficial) en la bahia Matapalito?
+### ¿Hay diferencia entre estimar el indice de afloramiento con Temperatura SUperficial Local y con Temperatura medida insitu en la bahia Matapalito?
 
 # Variables
 
@@ -20,7 +20,7 @@ Antes de poder analizar como las condiciones ambientales afectan los patrones de
 - Temperatura Superficial de Referencia (fuera del area de afloramiento)
 - Temperatura medida in situ
 
-En este caso no se hara un analisis causal, sino que se utilizaran datos diarios de la temperatura superficial del agua de un sitio local y de un sitio de referencia para sacar el indice de afloramiento semanal, mensual y por temporada. Particularmente el de temporada, se comparará con un t student para determinar si hay diferencias entre los indices de afloramiento de cada epoca.
+En este caso no se hara un analisis causal, sino que se utilizaran datos diarios de la temperatura superficial del agua de un sitio local y de un sitio de referencia para sacar el indice de afloramiento semanal y mensual. Se haran dos estimaciones de esto, una es usando los datos locales de temperatura satelital y otro usando los datos de temperatura registrada in situ. Luego se hara un t Student (o su equivalente no parametrico segun la distribucion de los datos) para ver si hay una diferencia entre estos metodos.
 
 
 
@@ -331,6 +331,17 @@ p<- ggplot(wkUI, aes(x = seven_day_index, y = value, colour = variable)) +
 
 p
 ```
+Comparar los metodos
+
+```{r}
+
+hist(wkUI$value)
+
+wwk<-wilcox.test(wkUI$value~wkUI$variable)
+
+wwk
+#si hay diferencias significativas entre los dos indices
+```
 
 ```{r}
 ##Unir bases de datos para hacerlas 'tidy'
@@ -362,7 +373,24 @@ pp<- ggplot(mUI, aes(x = month, y = value, colour = variable)) +
 pp
 ```
 
-# Interpretación 
+Comparar los metodos
+
+```{r}
+
+hist(mUI$value)
+
+wm<-wilcox.test(mUI$value~mUI$variable)
+
+wm
+#si hay diferencias significativas entre los dos indices
+
+```
+
+# Interpretacion
+
+Los metodos si dieron diferencia entre si, y esto puede ser por varias razones. En primer lugar, la temperatura registrada in situ capta mas la variabilidad diaria de esta variable, ya que se mide todo el dia y noche constantemente, a diferencia de la satelital que solo registra un dato por dia. Ademas, es posible que la escala espacial sea importante, ya que la temperatura in situ representa los datos en un solo punto dentro de la bahia de interes (lo cual puede ser beneficioso), mientras que los satelitales captan un espacio mayor (aprox. 1km a la redonda). Si esta bahia presenta caracteristicas de "refugio" climatico, como sucede en zonas cercanas (comunicacion personal de I. Chaves, estudiante de maestria), entonces el comportamiento de la temperatura dentro de Matapalito puede ser diferente al del poligono de datos satelitales. Aun asi, este procedimiento se debe de volver a repetir cuando se obtengan datos da mas puntos dentro de la bahia (para tener un promedio mas robusto del area). Tambien se puede estandarizar mas el estudio usando datos satelitales que registren la temperatura por hora y usando los datos registrados in situ en esos mismos periodos de tiempo. Si despues de hacer esto, los indices siguen presentando una diferencia significativa, es necesario evaluar cual de los dos metodos brindan informacion mas robusta y adecuada para el analisis de comportamiento espacial que se desea hacer.
+
+
 
 
 
