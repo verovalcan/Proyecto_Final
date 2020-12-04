@@ -248,8 +248,6 @@ dim(avTempMP)
 #Llamar datos de referencia y ajustar para que calcen con los in situ
 
 head(avSSTREF)
-avSSTREF$Date <- as.POSIXlt(strptime(as.character(avSSTREF$Date), "%Y-%m-%d"))
-
 colnames(avSSTREF)<- c("Date", "Ref_SST", "seven_day_index", "month")
 
 allTemp<-merge(avSSTREF, avTempMP, all.y=T)
@@ -307,27 +305,61 @@ Graficacion de los Indices de afloramiento (UI)
 tenemos dos UI semanales (`SSTwk` y `Tempwk`) y dos mensuales (`SSTm` y `TempM`)
 
 ```{r}
-wkUI<- ggplot(SSTwk, aes(seven_day_index, UI)) +
-  geom_line(color = "black", cex = 1.5) + 
-  geom_line(data= Tempwk, aes(seven_day_index, UI), color = "red") +
-    labs(title = "Indice de afloramiento semanal") + 
-    xlab("Semanas")+
-    theme(plot.title = element_text(hjust = 0.5)) +
-    theme_classic()
 
-wkUI
+##Unir bases de datos para hacerlas 'tidy'
+
+SSTwkUI<-SSTwk[,c(1,4)]
+colnames(SSTwkUI)<-c("seven_day_index","UI_SST")
+
+TempwkUI<-Tempwk[,c(1,4)]
+colnames(TempwkUI)<-c("seven_day_index","UI_InSitu")
+
+
+wkUI<- merge(SSTwkUI, TempwkUI, all.x=T )
+head(wkUI)
+
+wkUI<-reshape2::melt(wkUI, id.var = "seven_day_index")
+head(wkUI)
+
+p<- ggplot(wkUI, aes(x = seven_day_index, y = value, colour = variable)) +
+  geom_line() + 
+  labs(title = "Indice de afloramiento semanal") + 
+  xlab("Semanas")+
+  ylab("Indice de Afloramiento")+
+  theme(plot.title = element_text(hjust = 0.5))+
+  theme_classic()
+
+p
 ```
 
 ```{r}
-mUI<- ggplot(SSTm, aes(month, UI)) +
-  geom_point(color = "black", cex = 1.5) + 
-  geom_point(data= TempM, aes(month, UI), color = "red") +
-    labs(title = "Indice de afloramiento mensual") + 
-    xlab("Fecha")+
-    theme(plot.title = element_text(hjust = 0.5)) +
-    theme_classic()
+##Unir bases de datos para hacerlas 'tidy'
 
-mUI
+SSTmUI<-SSTm[,c(1,4)]
+colnames(SSTmUI)<-c("month","UI_SST")
+
+TempMUI<-TempM[,c(1,4)]
+colnames(TempMUI)<-c("month","UI_InSitu")
+
+
+mUI<- merge(SSTmUI, TempMUI, all.x=T )
+head(mUI)
+
+mUI$month<-as.factor(mUI$month)
+levels(mUI$month)<-c("01-2018", "02-2018","03-2018", "04-2018", "05-2018", "06-2018",  "07-2018", "08-2018", "09-2018", "10-2018", "11-2018" , "12-2018", "01-2019" , "02-2019","03-2019", "04-2019", "05-2019", "06-2019",  "07-2019", "08-2019", "09-2019", "10-2019", "11-2019" , "12-2019",  "01-2020", "02-2020", "03-2020", "04-2020", "05-2020", "06-2020")
+
+mUI<-reshape2::melt(mUI, id.var = "month")
+
+pp<- ggplot(mUI, aes(x = month, y = value, colour = variable)) +
+  geom_point() + 
+  scale_x_discrete(breaks= c("01-2018", "06-2018", "01-2019" , "06-2019",   "01-2020", "06-2020"))+
+  labs(title = "Indice de afloramientomensual") + 
+  xlab("Fecha")+
+  ylab("Indice de Afloramiento")+
+  theme(plot.title = element_text(hjust = 0.5))+
+  theme_classic()
+
+pp
 ```
 
 # Interpretación 
