@@ -28,6 +28,8 @@ En este caso no se hara un analisis causal, sino que se utilizaran datos diarios
 
 # Datos
 
+Los datos se pueden encontrar en [este repositorio](https://github.com/verovalcan/Proyecto_Final.git)
+
 Los datos de temperatura superficial se descargaron de las bases de datos satelitales libres de la NOAA
 
   Datos del satelite:
