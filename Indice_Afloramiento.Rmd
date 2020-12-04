@@ -2,7 +2,9 @@
 title: "Exploración del índice de afloramiento en Matapalito"
 author: "Veronica Valverde"
 date: "12/2/2020"
-output: html_document
+output:
+  rmdformats::material:
+    highlight: kate
 bibliography: library.bib
 ---
 
@@ -12,7 +14,7 @@ Mi ivestigacion se centra en los patrones de movimiento de tortugas carey juveni
 La bahia Matapalito se convierte en un sitio de crucial importancia, ya que al encontrar esta y otras especies de tortugas en peligro de extincion y en estadios vitales para su supervivencia como lo son las etapas juveniles. Por esto, entender mejor la ecologia y el comportamiento de las torugas en esta bahia puede ayudar a tomar mejore medidas de manejo. Sin embargo, en esta bahia en particular se unen factores importantes que pueden afectar los patrones de movimiento de las tortugas. En esta bahia se dan afloramientos costeros temporales, los cuales son eventos oceanograficos donde el viento causa un desplazamiento de las aguas superficiales y una surgencia de aguas profundas recas en nutrientes y bajas en oxigeno y temperatura. Estos eventos se dan etre Diciembre y Abril de cada año, y su efecto en los ecosistemas locales es cpoco conocido.
 Antes de poder analizar como las condiciones ambientales afectan los patrones de movimiento (lo que es uno de los principales objetivos de mi tesis de maestria), se debe de iniciar por analizar los patrones de estas condiciones ambientales para ver como cambian con el afloramiento. En este caso nos vamos a enfocar en las temperaturas del agua, que son uno de los factores que mas cambian con estos eventos y son de las mas faciles de medir. Ademas de que es muy util como proxy del indice de afloraminto (el cual indica la intensidad del evento).
 
-### ¿Hay diferencia entre estimar el indice de afloramiento con Temperatura SUperficial Local y con Temperatura medida insitu en la bahia Matapalito?
+### ¿Hay diferencia entre estimar el indice de afloramiento con Temperatura Superficial Local y con Temperatura medida insitu en la bahia Matapalito?
 
 # Variables
 
@@ -45,7 +47,7 @@ Coordenadas referencia
 x= 10.580319°, y=-98.709226°
 x= 10.607619°, y=-98.740472°
 
-```{r}
+```{r Directorios, warning=FALSE, echo=TRUE, include= F}
 #Establecer Direcotio
 
 setwd("C:/Users/verov/Documents/UCR/2020/IICiclo/Investigacion_Reproducible/Proyecto_Final")
@@ -54,22 +56,22 @@ setwd(wd1)
 ```
 
 
-```{r}
+```{r Datos satelitles, echo=TRUE, warning=FALSE, include= F}
 #Cargar datos de temperatura satelital
 
-SSTMP<-read.csv("SST_MP.csv", header = T, sep = ",")
+SSTMP<-read.csv("SST_MP.csv", header = T, sep = ",")#datos locales
 
-SSTREF<-read.csv("SST_REF.csv", header = T, sep = ",")
+SSTREF<-read.csv("SST_REF.csv", header = T, sep = ",")#datos de referencia
 
 ```
 
 
 Los datos de temperatura del agua in situ se tomaron con un HOBO fijo en la bahia (coordenadas  10.935816°, -85.795906°), programado para hacer las mediciones cada 5 min. Fue instalado el 2018-09-08 y extraido el 2020-08-07.
 
-```{r}
+```{r Datos in situ, echo=TRUE, warning=FALSE, include= F}
 #extraer datos insitu de temperatura
 
-TempMP<-read.csv("Matapalito.csv", header=T, sep= ",")
+TempMP<-read.csv("Matapalito.csv", header=T, sep= ",")#datos in situ
 
 ```
 
@@ -78,15 +80,18 @@ TempMP<-read.csv("Matapalito.csv", header=T, sep= ",")
 
 Primero cargar las librerias necesarias
 
-```{r}
+```{r Librerias, echo=TRUE, warning=FALSE, include= F}
 library(chron)
 library(dplyr)
 library(ggplot2)
 ```
 
-Procesamiento de datos satelitales
+en las siguientes secciones se analizaran los datos satelitales, los insitu y luego se haran los graficos y analisis estadisticos.
 
-```{r}
+
+# Procesamiento de datos satelitales
+
+```{r Procesamiento datos satelitales, warning=FALSE}
 #explorarcion inicial
 head(SSTMP)
 str(SSTMP)
@@ -148,19 +153,23 @@ head(avSSTREF)
 avSSTMP$seven_day_index <- c(0, rep(1:(nrow(avSSTMP)-1)%/%7)) #agrupar x semana
 
 SSTMPmin<-group_by(avSSTMP, seven_day_index) %>%
-  summarise(min_sst = min(analysed_sst))
+  summarise(min_sst = min(analysed_sst))#sacar minimo local
 
 avSSTREF$seven_day_index <- c(0, rep(1:(nrow(avSSTREF)-1)%/%7))
 
 SSTREFmax<-group_by(avSSTREF, seven_day_index) %>%
-  summarise(max_sst = max(analysed_sst))
+  summarise(max_sst = max(analysed_sst)) #sacar maximo referencia
 
 
 head(SSTMPmin)
 dim(SSTMPmin) #131 semanas, correcto para el periodo
 head(SSTREFmax)
 dim(SSTREFmax)
+```
 
+## Indice de afloramiento
+
+```{r Indice de afloramiento semanal SST, warning=FALSE}
 
 #calcular el Indice de afloramiento semanal
 
@@ -173,10 +182,10 @@ head(SSTwk)
 SSTwk$UI<-SSTwk$max_sst-SSTwk$min_sst
 
 head(SSTwk)
+```
 
 
-##Indice mensual
-
+```{r warning=FALSE}
 #Sacar minimos y maximos mensuales que son con los que se sacan el Indice
 
 avSSTMP$date<-as.POSIXlt(strptime(as.character(avSSTMP$date), "%Y-%m-%d"))
@@ -198,9 +207,13 @@ head(mSSTMPmin)
 dim(mSSTMPmin) 
 head(mSSTREFmax)
 dim(mSSTREFmax)
+```
 
+## Indice de afloramiento mensual
 
-#calcular el Indice de afloramiento semanal
+```{r Indice de aflormaiento mensual SST, warning=FALSE}
+
+#calcular el Indice de afloramiento mensual
 
 #Base de datos semanales
 SSTm<-merge(mSSTMPmin,mSSTREFmax, by="month")
@@ -215,9 +228,9 @@ head(SSTm)
 ```
 
 
-Procesamiento de datos in situ
+# Procesamiento de datos in situ
 
-```{r}
+```{r Procesamiento datos in situ, warning=FALSE}
 #Exploracion Inicial
 head(TempMP)
 str(TempMP)
@@ -267,6 +280,14 @@ maxTemp<-group_by(allTemp, seven_day_index) %>%
 head(minTemp)
 head(maxTemp)
 
+```
+
+
+## Indice de aflormaiento semanal
+
+```{r Indice de aflormaiento semanal in situ, warning=FALSE}
+
+
 #Base de datos semanales
 Tempwk<-merge(minTemp,maxTemp, by="seven_day_index")
 
@@ -276,9 +297,10 @@ head(Tempwk)
 Tempwk$UI<-Tempwk$max_sst-Tempwk$min_insitu
 
 head(Tempwk)
+```
 
 
-##Indice mensual
+```{r warning=FALSE}
 
 #Sacar minimos y maximos mensuales que son con los que se sacan el Indice
 
@@ -287,6 +309,11 @@ avTempMP$month <- paste(format(avTempMP$Date, format="%m"),format(avTempMP$Date,
 mTempMPmin<-group_by(avTempMP, month) %>%
   summarise(min_insitu = min(Temp))
 dim(mTempMPmin)
+```
+
+## Indice de aflormaiento mensual
+
+```{r Indice de aflormaiento mensual in situ, warning=FALSE}
 
 #Base de datos mensuales
 TempM<-merge(mTempMPmin, mSSTREFmax, by="month", all.y= F)
@@ -300,11 +327,13 @@ head(TempM)
 
 ```
 
-Graficacion de los Indices de afloramiento (UI)
+# Graficacion de UI
 
-tenemos dos UI semanales (`SSTwk` y `Tempwk`) y dos mensuales (`SSTm` y `TempM`)
+Tenemos dos UI semanales (`SSTwk` y `Tempwk`) y dos mensuales (`SSTm` y `TempM`)
 
-```{r}
+## Indices semanales
+
+```{r Indices semanales, warning=FALSE}
 
 ##Unir bases de datos para hacerlas 'tidy'
 
@@ -331,9 +360,10 @@ p<- ggplot(wkUI, aes(x = seven_day_index, y = value, colour = variable)) +
 
 p
 ```
+
 Comparar los metodos
 
-```{r}
+```{r estadistico semanal, warning=FALSE}
 
 hist(wkUI$value)
 
@@ -343,7 +373,10 @@ wwk
 #si hay diferencias significativas entre los dos indices
 ```
 
-```{r}
+
+## Indices mensuales
+
+```{r Indices mensuales, warning=FALSE}
 ##Unir bases de datos para hacerlas 'tidy'
 
 SSTmUI<-SSTm[,c(1,4)]
@@ -375,7 +408,7 @@ pp
 
 Comparar los metodos
 
-```{r}
+```{r estadisticos mensuales, warning=FALSE}
 
 hist(mUI$value)
 
@@ -385,6 +418,7 @@ wm
 #si hay diferencias significativas entre los dos indices
 
 ```
+
 
 # Interpretacion
 
